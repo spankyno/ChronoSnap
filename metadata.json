@@ -1,0 +1,7 @@
+{
+  "name": "Aitor ChronoSnap",
+  "description": "Una cabina de fotos de viaje en el tiempo que transporta tu imagen a eras históricas y lugares exóticos utilizando IA.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
