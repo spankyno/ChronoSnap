@@ -55,10 +55,14 @@ export async function generateTimeTravelImage(
     // The response structure for images in Gemini 2.5 Flash Image might be in inlineData of candidates
     const candidates = response.candidates;
     if (candidates && candidates.length > 0) {
-      const parts = candidates[0].content.parts;
-      for (const part of parts) {
-        if (part.inlineData && part.inlineData.data) {
-           return `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+      const candidate = candidates[0];
+      // Explicitly check for content and parts existence before accessing
+      if (candidate?.content?.parts) {
+        const parts = candidate.content.parts;
+        for (const part of parts) {
+          if (part.inlineData && part.inlineData.data) {
+             return `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+          }
         }
       }
     }
