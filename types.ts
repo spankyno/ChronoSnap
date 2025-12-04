@@ -11,9 +11,15 @@ export interface Era {
   scenes: Scene[];
 }
 
-export type AppState = 'HOME' | 'CAPTURE' | 'SELECT' | 'PROCESSING' | 'RESULT';
+export type AppState = 'HOME' | 'CAPTURE' | 'SELECT' | 'PROCESSING' | 'RESULT' | 'STATS';
 
 export interface GeneratedImageResult {
   imageUrl: string;
   promptUsed: string;
+}
+
+export interface LogEntry {
+  ip: string;
+  timestamp: string;
+  userAgent: string;
 }

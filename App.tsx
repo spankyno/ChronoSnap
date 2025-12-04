@@ -5,7 +5,7 @@ import {
   Mountain, Trees, Sun, ShoppingBag, Mic, Dumbbell 
 } from 'lucide-react';
 import { ERAS } from './constants';
-import { AppState, Scene } from './types';
+import { AppState, Scene, LogEntry } from './types';
 import { generateTimeTravelImage } from './services/geminiService';
 import Footer from './components/Footer';
 
@@ -23,6 +23,10 @@ const App: React.FC = () => {
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Stats state
+  const [stats, setStats] = useState<LogEntry[]>([]);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -46,6 +50,23 @@ const App: React.FC = () => {
 
     logVisit();
   }, []); // Run once on mount
+
+  // --- STATS LOGIC ---
+  const fetchStats = async () => {
+    setAppState('STATS');
+    setLoadingStats(true);
+    try {
+      const res = await fetch('/api/get-stats');
+      const data = await res.json();
+      if (data.logs) {
+        setStats(data.logs);
+      }
+    } catch (e) {
+      setError("No se pudieron cargar las estadísticas.");
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   // --- CAMERA LOGIC ---
   const startCamera = async () => {
@@ -357,6 +378,53 @@ const App: React.FC = () => {
     </div>
   );
 
+  const renderStats = () => (
+    <div className="flex flex-col items-center h-full w-full max-w-4xl mx-auto px-4 pb-12 pt-8">
+      <div className="flex items-center justify-between w-full mb-8">
+        <h2 className="text-3xl font-bold text-white title-font">Registro de Actividad</h2>
+        <button onClick={resetApp} className="text-chrono-300 hover:text-white flex items-center gap-2">
+          <ArrowLeft className="w-4 h-4" /> Volver
+        </button>
+      </div>
+      
+      <div className="w-full bg-chrono-800 rounded-xl overflow-hidden shadow-2xl border border-chrono-700">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-chrono-100">
+            <thead className="bg-chrono-700 text-chrono-gold uppercase font-semibold">
+              <tr>
+                <th className="px-6 py-3">Fecha / Hora</th>
+                <th className="px-6 py-3">Dirección IP</th>
+                <th className="px-6 py-3">Navegador</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-chrono-700">
+              {loadingStats ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-8 text-center text-chrono-300">Cargando datos...</td>
+                </tr>
+              ) : stats.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-8 text-center text-chrono-300">No hay registros aún.</td>
+                </tr>
+              ) : (
+                stats.map((log, index) => (
+                  <tr key={index} className="hover:bg-chrono-700/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {new Date(log.timestamp).toLocaleString('es-ES')}
+                    </td>
+                    <td className="px-6 py-4 font-mono text-xs">{log.ip}</td>
+                    <td className="px-6 py-4 truncate max-w-xs" title={log.userAgent}>{log.userAgent}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p className="mt-4 text-xs text-chrono-500">Mostrando los últimos 100 accesos.</p>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-chrono-900 text-gray-100 flex flex-col font-sans overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-chrono-800 via-chrono-900 to-black">
       {/* Header/Nav for consistent branding on sub-pages */}
@@ -380,9 +448,10 @@ const App: React.FC = () => {
         {appState === 'SELECT' && renderSelection()}
         {appState === 'PROCESSING' && renderProcessing()}
         {appState === 'RESULT' && renderResult()}
+        {appState === 'STATS' && renderStats()}
       </main>
 
-      <Footer />
+      <Footer onStatsClick={fetchStats} />
     </div>
   );
 };
